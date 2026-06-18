@@ -39,14 +39,14 @@ main{flex:1;display:flex;gap:20px;padding:14px 30px 20px;}
 .rc{border:3px solid var(--pup);border-radius:14px;cursor:pointer;transition:all .25s;display:flex;flex-direction:column;background:var(--pup);user-select:none;overflow:hidden;position:relative;}
 .rc:hover{border-color:var(--pu);transform:translateY(-3px);box-shadow:0 5px 14px rgba(124,77,255,0.15);}
 .rc.sel{border-color:var(--pu);background:linear-gradient(135deg,#EDE7FF,#E0D4FF);transform:translateY(-3px);}
-.ri{width:100%;height:120px;overflow:hidden;background:#fff;}
+.ri{width:100%;height:180px;overflow:hidden;background:#fff;}
 .ri img{width:100%;height:100%;object-fit:contain;}
-.rb{padding:10px 10px 28px;display:flex;flex-direction:column;gap:3px;}
-.rn{font-size:10px;font-weight:900;color:var(--pul);letter-spacing:1px;}
-.rt{font-size:15px;font-weight:900;color:var(--tx);line-height:1.4;}
+.rb{padding:14px 14px 36px;display:flex;flex-direction:column;gap:6px;}
+.rn{font-size:14px;font-weight:900;color:var(--pul);letter-spacing:1px;}
+.rt{font-size:22px;font-weight:900;color:var(--tx);line-height:1.5;}
 .rck{position:absolute;top:6px;right:6px;font-size:20px;opacity:0;transition:opacity .2s;}
 .rc.sel .rck{opacity:1;}
-.tts{position:absolute;bottom:6px;right:6px;background:#fff;border:2px solid var(--pul);border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:2;}
+.tts{position:absolute;bottom:10px;right:10px;background:#fff;border:2px solid var(--pul);border-radius:50%;width:40px;height:40px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:2;}
 .tts:hover{background:var(--pup);transform:scale(1.1);}
 /* Style */
 .sg{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
@@ -239,6 +239,13 @@ main{flex:1;display:flex;gap:20px;padding:14px 30px 20px;}
 <div class="toast" id="toast"></div>
 <div class="cfw" id="cfw"></div>
 <script>
+const AUDIO_SRC={};
+document.addEventListener("DOMContentLoaded",()=>{
+  [1,2,3,4].forEach(n=>{
+    const el=document.getElementById("aud"+n);
+    if(el)AUDIO_SRC[n]=el.src;
+  });
+});
 const RULES={
   "1":"나의 비밀을 AI에게 말하지 않겠습니다",
   "2":"다른 사람의 사진을 함부로 올리지 않겠습니다",
@@ -255,13 +262,28 @@ let selR=new Set(), selSty="", extras=[], ca=null;
 function playA(n){
   try{
     if(ca){ca.pause();ca.currentTime=0;}
-    const el=document.getElementById("aud"+n);
-    if(!el)return;
+    let el=document.getElementById("aud"+n);
+    if(!el){
+      // audio 태그가 없으면 동적 생성
+      el=document.createElement("audio");
+      el.id="aud"+n;
+      el.preload="auto";
+      el.src=AUDIO_SRC[n];
+      document.body.appendChild(el);
+    }
     el.currentTime=0;
     const p=el.play();
-    if(p&&p.catch)p.catch(e=>console.log(e));
+    if(p&&p.catch)p.catch(e=>{
+      console.log("재생오류:",e);
+      // 새 Audio 객체로 재시도
+      try{
+        const a=new Audio(el.src);
+        a.play().catch(e2=>console.log("재시도실패:",e2));
+        ca=a;
+      }catch(e3){}
+    });
     ca=el;
-  }catch(e){console.log(e);}
+  }catch(e){console.log("playA오류:",e);}
 }
 function toggleR(el){
   const r=el.dataset.r;
